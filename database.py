@@ -44,7 +44,7 @@ class Preset(Base):
         self.name = name
 
 
-Base.metadata.create_all(engine)
+# Base.metadata.create_all(engine)
 
 Session = sessionmaker()
 Session.configure(bind=engine)
