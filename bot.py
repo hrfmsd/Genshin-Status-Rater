@@ -430,9 +430,9 @@ async def rate(ctx):
     # スコア
     msg_atk = f'{(int(results[0][1]) + int(results[0][2])):,} ({int(results[0][1]):,} + {int(results[0][2]):,})'
     mgs_ideal_atk = f'{(int(results[0][1]) + int(ideal_results[0])):,} ({int(results[0][1]):,} + {int(ideal_results[0]):,})'
-    msg_cr = f'{float(results[2][1]):.1%}%'
+    msg_cr = f'{results[2][1]}%'
     msg_ideal_cr = f'{float(ideal_results[1]):.1%}'
-    msg_cd = f'{float(results[1][1]):.1%}%'
+    msg_cd = f'{results[1][1]}%'
     msg_ideal_cd = f'{float(ideal_results[2]):.1%}'
     embed.add_field(name=f'**{lang.score}：{score}{lang.score_suffix}**',
                     value=f'> 理想値とのダメージ差：{ideal_results[3]:.2%}\n\n', inline=False)

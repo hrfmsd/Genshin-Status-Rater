@@ -223,6 +223,10 @@ def rate(results, options={}, lang=tr.ja()):
     dmg_diff_rate = (exp_dmg_v / ideal_exp_dmg_v - 1)
 
     print('============')
+    print(f'x_atk:{x_atk}')
+    print(f'cr:{cr}')
+    print(f'cd:{cd}')
+    print(f'a:{a}')
     print(f'c_n:{c_n}')
     print(f'a_:{a_}')
     print('============')
@@ -237,14 +241,14 @@ def rate(results, options={}, lang=tr.ja()):
     print(f'dmg_diff_rate:{dmg_diff_rate}')
     print('============')
 
+    # 理想値とのダメージ差：-6.95%
+    print(f'理想値とのダメージ差：{dmg_diff_rate:.2%}')
     # 同じ装備スコアの理想値：+攻撃力(緑)　842
     print(f'+攻撃力(緑)：{int(ideal_x * atk_base):,}')
     # 同じ装備スコアの理想値：会心率　90%
     print(f'会心率：{ideal_cr:.1%}')
     # 同じ装備スコアの理想値：会心ダメージ 180.1%
     print(f'会心ダメージ：{ideal_cd:.1%}')
-    # 理想値とのダメージ差：-6.95%
-    print(f'理想値とのダメージ差：{dmg_diff_rate:.2%}')
 
     ideal_results += [int(ideal_x * atk_base)]
     ideal_results += [ideal_cr]
@@ -274,8 +278,9 @@ def calc_exp_dmg(n, x, c, cr, cd):
 if __name__ == '__main__':
     if sys.version_info[0] == 3 and sys.version_info[1] >= 8 and sys.platform.startswith('win'):
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    url = 'https://media.discordapp.net/attachments/884021052575985745/884041657790652436/unknown.png'
     # url = 'https://media.discordapp.net/attachments/884021052575985745/884032862591004682/unknown.png'
-    url = 'https://media.discordapp.net/attachments/875974646195970118/882272611646726204/unknown.png'
+    # url = 'https://media.discordapp.net/attachments/875974646195970118/882272611646726204/unknown.png'
     # url = 'https://media.discordapp.net/attachments/875974646195970118/882272755163234324/unknown.png'
     lang = tr.ja()
     success, text = asyncio.run(ocr(url, 2, lang))
