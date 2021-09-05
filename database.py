@@ -9,7 +9,13 @@ load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
 SERVER_ID = int(os.getenv('SERVER_ID', 0))
 
-engine = create_engine(DATABASE_URL)
+# https://help.heroku.com/ZKNTJQSK/why-is-sqlalchemy-1-4-x-not-connecting-to-heroku-postgres
+if DATABASE_URL.startswith("postgres://"):
+    db_url = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+else:
+    db_url = DATABASE_URL
+
+engine = create_engine(db_url)
 
 Base = declarative_base()
 
