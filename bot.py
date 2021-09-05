@@ -27,6 +27,12 @@ SHARDS = int(os.getenv('SHARDS', 10))
 # タイムゾーンの生成
 JST = timezone(timedelta(hours=+9), 'JST')
 
+if HEROKU_API_KEY and HEROKU_APP_ID:
+    import heroku3
+
+    heroku_conn = heroku3.from_key(HEROKU_API_KEY)
+    app = heroku_conn.apps()[HEROKU_APP_ID]
+    
 if DATABASE_URL:
     import database as db
 
