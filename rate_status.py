@@ -76,7 +76,28 @@ def parse(text, lang=tr.ja()):
     choices = elements + [lang.atk, lang.cr, lang.cd]
     choices = {unidecode(choice).lower(): choice for choice in choices}
 
-    for line in text.splitlines():
+    lines = text.splitlines()
+    print(len(lines))
+
+    positions = {
+        lang.cr: 4,
+        lang.cd: 5,
+        'atk_add': 12,
+    }
+    if len(lines) == 35:
+        positions = {
+            lang.cr: 5,
+            lang.cd: 6,
+            'atk_add': 13,
+        }
+    elif len(lines) == 34:
+        positions = {
+            lang.cr: 4,
+            lang.cd: 5,
+            'atk_add': 12,
+        }
+
+    for line in lines:
         if not line:
             continue
 
@@ -114,7 +135,7 @@ def parse(text, lang=tr.ja()):
             results += [[stat, '', '']]
             continue
 
-        # 14件（熟知の数値がOCRの問題で取得できない）
+        # 14件（熟知の数値がOCRの問題で取得できない時がある）
         if num_reg.fullmatch(line.replace(' ', '')):
             if line.replace(' ', '') != '0':
                 values += [line.replace(' ', '')]
@@ -123,17 +144,17 @@ def parse(text, lang=tr.ja()):
         # 攻撃力
         if result[0] == lang.atk:
             result[1] = values[1]
-            result[2] = values[12].replace('+', '')
+            result[2] = values[positions['atk_add']].replace('+', '')
             continue
 
         # 会心率
         if result[0] == lang.cr:
-            result[1] = values[4].replace('%', '')
+            result[1] = values[positions[lang.cr]].replace('%', '')
             continue
 
         # 会心ダメージ
         if result[0] == lang.cd:
-            result[1] = values[5].replace('%', '')
+            result[1] = values[positions[lang.cd]].replace('%', '')
             continue
 
     print(results)
@@ -253,6 +274,7 @@ def calc_exp_dmg(n, x, c, cr, cd):
 if __name__ == '__main__':
     if sys.version_info[0] == 3 and sys.version_info[1] >= 8 and sys.platform.startswith('win'):
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    # url = 'https://media.discordapp.net/attachments/884021052575985745/884032862591004682/unknown.png'
     url = 'https://media.discordapp.net/attachments/875974646195970118/882272611646726204/unknown.png'
     # url = 'https://media.discordapp.net/attachments/875974646195970118/882272755163234324/unknown.png'
     lang = tr.ja()
