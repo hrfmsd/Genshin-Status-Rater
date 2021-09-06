@@ -18,7 +18,7 @@ OCR_API_KEY = os.getenv('OCR_SPACE_API_KEY')
 
 # regex
 reg = re.compile(r'\d+(?:[.,]\d+)?')
-num_reg = re.compile(r'^(\+)?\d+([.,]\d{1,3})?%?')
+num_reg = re.compile(r'^(\+)?\d+([.,]\d{1,3})?%?$')
 bad_reg = re.compile(r'\d+/1000$')
 hp_reg = re.compile(r'\d[.,]\d{3}')
 atk_reg = re.compile(r'^\+?\d?[.,]?\d{3}')
@@ -95,9 +95,10 @@ def parse(text, lang=tr.ja()):
     # choices = {unidecode(choice).lower(): choice for choice in choices}
 
     lines = text.splitlines()
-    print(len(lines))
+    line_count = len(lines)
+    print('行数：', line_count)
 
-    if len(lines) == 35:
+    if line_count == 35:
         positions = {
             lang.atk_base: 1,
             lang.atk_add: 13,
@@ -106,7 +107,7 @@ def parse(text, lang=tr.ja()):
             lang.er: 9,
             lang.em: 3,
         }
-    elif len(lines) == 34:
+    elif line_count == 34:
         positions = {
             lang.atk_base: 1,
             lang.atk_add: 12,
@@ -116,7 +117,8 @@ def parse(text, lang=tr.ja()):
             lang.em: 99,
         }
 
-    for line in lines:
+    print('============')
+    for idx, line in enumerate(lines):
         if not line:
             continue
 
@@ -136,7 +138,7 @@ def parse(text, lang=tr.ja()):
             each_reg_unidecode = re.compile(re.escape(unidecode(each_reg).lower().replace(' ', '')) + r'(\+\d[.,]\d%)?')
             # print('diff:', each_reg_unidecode, line.replace(' ', ''))
             if each_reg_unidecode.search(line_replaced):
-                print('ignore:', 'ok')
+                # print('ignore:', line_replaced)
                 has_ignore = True
                 break
 
@@ -157,7 +159,10 @@ def parse(text, lang=tr.ja()):
 
         # 14-15件（熟知の数値[3]がOCRの問題で取得できない時がある）
         if num_reg.fullmatch(line_replaced):
-            if line_replaced != '0':
+            # if line_replaced != '0':
+            # 先頭の2件はOCRによる謎の読み取り値「0」
+            if idx >= 20:
+                print(idx, line_replaced)
                 values += [line_replaced]
 
     for k in results.keys():
@@ -177,7 +182,7 @@ def parse(text, lang=tr.ja()):
             results[k] = float(values[positions[k]].replace('%', ''))
             continue
         if k == lang.em:
-            if values[positions[k]:positions[k]+1]:
+            if values[positions[k]:positions[k] + 1]:
                 results[k] = int(values[positions[k]].replace(',', ''))
             else:
                 results[k] = 0
@@ -185,7 +190,7 @@ def parse(text, lang=tr.ja()):
 
     results[lang.atk] = results[lang.atk_base] + results[lang.atk_add]
 
-    print(results)
+    print('============\n', results)
     return results
 
 
@@ -297,6 +302,7 @@ def rate(results, options, lang=tr.ja()):
         score += dmg_diff_rate_score * 5
 
     print(f'スコア：{score}点', ideal_results)
+    print('============\n')
     return score, ideal_results
 
 
@@ -309,10 +315,15 @@ def calc_exp_dmg(n, x, c, cr, cd):
 if __name__ == '__main__':
     if sys.version_info[0] == 3 and sys.version_info[1] >= 8 and sys.platform.startswith('win'):
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    url = 'https://media.discordapp.net/attachments/884021052575985745/884299376917381171/unknown.png'
+    # 35 / kannu
+    url = 'https://media.discordapp.net/attachments/884021052575985745/884384521993203752/unknown.png'
+    # 35 / raiden
+    # url = 'https://media.discordapp.net/attachments/884021052575985745/884299376917381171/unknown.png'
     # url = 'https://media.discordapp.net/attachments/884021052575985745/884041657790652436/unknown.png'
     # url = 'https://media.discordapp.net/attachments/884021052575985745/884032862591004682/unknown.png'
-    # url = 'https://media.discordapp.net/attachments/875974646195970118/882272611646726204/unknown.png'
+    # 34 / ayaka
+    url = 'https://media.discordapp.net/attachments/875974646195970118/882272611646726204/unknown.png'
+    # 34 /
     # url = 'https://media.discordapp.net/attachments/875974646195970118/882272755163234324/unknown.png'
     lang = tr.ja()
     success, text = asyncio.run(ocr(url, 2, lang))
