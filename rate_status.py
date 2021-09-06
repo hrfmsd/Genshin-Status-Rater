@@ -143,8 +143,8 @@ def parse(text, lang=tr.ja()):
     for result in results:
         # 攻撃力
         if result[0] == lang.atk:
-            result[1] = values[1]
-            result[2] = values[positions['atk_add']].replace('+', '')
+            result[1] = values[1].replace(',', '')
+            result[2] = values[positions['atk_add']].replace(',', '').replace('+', '')
             continue
 
         # 会心率
@@ -278,7 +278,8 @@ def calc_exp_dmg(n, x, c, cr, cd):
 if __name__ == '__main__':
     if sys.version_info[0] == 3 and sys.version_info[1] >= 8 and sys.platform.startswith('win'):
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    url = 'https://media.discordapp.net/attachments/884021052575985745/884041657790652436/unknown.png'
+    url = 'https://media.discordapp.net/attachments/884021052575985745/884299376917381171/unknown.png'
+    # url = 'https://media.discordapp.net/attachments/884021052575985745/884041657790652436/unknown.png'
     # url = 'https://media.discordapp.net/attachments/884021052575985745/884032862591004682/unknown.png'
     # url = 'https://media.discordapp.net/attachments/875974646195970118/882272611646726204/unknown.png'
     # url = 'https://media.discordapp.net/attachments/875974646195970118/882272755163234324/unknown.png'
