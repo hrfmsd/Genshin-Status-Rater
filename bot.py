@@ -413,32 +413,58 @@ async def rate(ctx):
     # スコアによってembedの色を指定する
     if score <= 50:
         color = discord.Color.blue()
+        embed_thumbnail_url = 'https://media.discordapp.net/attachments/884348128441024523/884373496287858699/score_50.png'
     elif 50 < score <= 75:
         color = discord.Color.purple()
+        if score <= 60:
+            embed_thumbnail_url = 'https://media.discordapp.net/attachments/884348128441024523/884373523953496094/score_60.jpg'
+        elif score <= 70:
+            embed_thumbnail_url = 'https://media.discordapp.net/attachments/884348128441024523/884373552512503828/score_70.png'
+        else:
+            embed_thumbnail_url = 'https://media.discordapp.net/attachments/884348128441024523/884373574448730182/score_80.png'
     else:
         color = discord.Color.gold()
+        if score <= 80:
+            embed_thumbnail_url = 'https://media.discordapp.net/attachments/884348128441024523/884382339088670741/score_80.jpg'
+        elif score <= 90:
+            embed_thumbnail_url = 'https://media.discordapp.net/attachments/884348128441024523/884373604601577482/score_90.gif'
+        else:
+            embed_thumbnail_url = 'https://media.discordapp.net/attachments/884348128441024523/884375978309214208/score_90.png'
 
     # 埋め込み
     embed = discord.Embed(
-        title='ステータス画像',
+        title=lang.title,
         color=color,
         url=url,
         timestamp=datetime.now(JST),
     )
     # 送信者情報セット
     embed.set_author(name=ctx.message.author.display_name, icon_url=ctx.message.author.avatar_url)
-    # スコア
-    msg_atk = f'{(int(results[0][1]) + int(results[0][2])):,} ({int(results[0][1]):,} + {int(results[0][2]):,})'
-    mgs_ideal_atk = f'{(int(results[0][1]) + int(ideal_results[0])):,} ({int(results[0][1]):,} + {int(ideal_results[0]):,})'
-    msg_cr = f'{results[2][1]}%'
-    msg_ideal_cr = f'{float(ideal_results[1]):.1%}'
-    msg_cd = f'{results[1][1]}%'
-    msg_ideal_cd = f'{float(ideal_results[2]):.1%}'
-    embed.add_field(name=f'**{lang.score}：{score}{lang.score_suffix}**',
-                    value=f'> 理想値とのダメージ差：{ideal_results[3]:.2%}\n\n', inline=False)
-    embed.add_field(name=f'**{lang.atk}**', value=f'> 現在値：{msg_atk}\n> 理想値：{mgs_ideal_atk}\n')
-    embed.add_field(name=f'**{lang.cr}**', value=f'> 現在値：{msg_cr}\n> 理想値：{msg_ideal_cr}\n')
-    embed.add_field(name=f'**{lang.cd}**', value=f'> 現在値：{msg_cd}\n> 理想値：{msg_ideal_cd}\n')
+
+    # スコア表示
+    ideal_atk_add = ideal_results[1]
+    ideal_cr = ideal_results[2]
+    ideal_cd = ideal_results[3]
+    msg_exp_dmg = ideal_results[4]
+    msg_ideal_exp_dmg = ideal_results[5]
+    msg_atk = f'{(results[lang.atk_base] + results[lang.atk_add]):,} ({results[lang.atk_base]:,} + {results[lang.atk_add]:,})'
+    mgs_ideal_atk = f'{(results[lang.atk_base] + ideal_atk_add):,} ({results[lang.atk_base]:,} + {ideal_atk_add:,})'
+    msg_cr = f'{results[lang.cr]}%'
+    msg_ideal_cr = f'{ideal_cr:.1%}'
+    msg_cd = f'{results[lang.cd]}%'
+    msg_ideal_cd = f'{ideal_cd:.1%}'
+    msg_er = f'{results[lang.er]}%'
+    msg_em = f'{results[lang.em]:,}'
+
+    embed.add_field(name=f'**{lang.score}: {score}{lang.score_suffix}**',
+                    value=f'> {lang.ideal_dmg_diff}: {ideal_results[0]:.2%}\n> {lang.exp_dmg}: {msg_exp_dmg:,} / {msg_ideal_exp_dmg:,}\n',
+                    inline=False)
+    embed.set_thumbnail(url=embed_thumbnail_url)
+    embed.add_field(name=f'**{lang.atk}**', value=f'> {lang.current_val}: {msg_atk}\n> {lang.ideal_val}: {mgs_ideal_atk}\n')
+    embed.add_field(name=f'**{lang.cr}**', value=f'> {lang.current_val}: {msg_cr}\n> {lang.ideal_val}: {msg_ideal_cr}\n')
+    embed.add_field(name=f'**{lang.cd}**', value=f'> {lang.current_val}: {msg_cd}\n> {lang.ideal_val}: {msg_ideal_cd}\n')
+    embed.add_field(name=f'**{lang.er}**', value=f'> {lang.current_val}: {msg_er}\n')
+    embed.add_field(name=f'**{lang.em}**', value=f'> {lang.current_val}: {msg_em}\n')
     embed.set_footer(text='\nステータス画像を添付して本文に`/rate`をつけて投稿してください\n')
 
     await send(ctx, embed=embed)

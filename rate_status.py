@@ -69,32 +69,51 @@ async def ocr(url, num, lang=tr.ja()):
 
 # OCR APIの解析結果を解析
 def parse(text, lang=tr.ja()):
-    results = []
+    results = {
+        lang.atk: 0,
+        lang.atk_base: 0,
+        lang.atk_add: 0,
+        lang.cr: 0,
+        lang.cd: 0,
+        lang.er: 0,
+        lang.em: 0,
+    }
+
+    positions = {
+        lang.atk_base: 1,
+        lang.atk_add: 13,
+        lang.cr: 4,
+        lang.cd: 5,
+        lang.er: 8,
+        lang.em: 3,
+    }
+
     values = []
 
-    elements = []
-    choices = elements + [lang.atk, lang.cr, lang.cd]
-    choices = {unidecode(choice).lower(): choice for choice in choices}
+    # elements = []
+    # choices = elements + [lang.atk, lang.cr, lang.cd, lang.er, lang.em]
+    # choices = {unidecode(choice).lower(): choice for choice in choices}
 
     lines = text.splitlines()
     print(len(lines))
 
-    positions = {
-        lang.cr: 4,
-        lang.cd: 5,
-        'atk_add': 12,
-    }
     if len(lines) == 35:
         positions = {
+            lang.atk_base: 1,
+            lang.atk_add: 13,
             lang.cr: 5,
             lang.cd: 6,
-            'atk_add': 13,
+            lang.er: 9,
+            lang.em: 3,
         }
     elif len(lines) == 34:
         positions = {
+            lang.atk_base: 1,
+            lang.atk_add: 12,
             lang.cr: 4,
             lang.cd: 5,
-            'atk_add': 12,
+            lang.er: 8,
+            lang.em: 99,
         }
 
     for line in lines:
@@ -107,7 +126,8 @@ def parse(text, lang=tr.ja()):
         line = unidecode(line).lower()
         line = line.replace(':', '.').replace('-', '').replace('0/0', '%')
         line = line.replace('\'', '').replace('*', '')
-        if line.replace(' ', '') in lang.ignore or bad_reg.search(line.replace(' ', '')):
+        line_replaced = line.replace(' ', '')
+        if line_replaced in lang.ignore or bad_reg.search(line_replaced):
             continue
 
         # 元素熟知の説明文を無視
@@ -115,7 +135,7 @@ def parse(text, lang=tr.ja()):
         for each_reg in lang.ignore_regs:
             each_reg_unidecode = re.compile(re.escape(unidecode(each_reg).lower().replace(' ', '')) + r'(\+\d[.,]\d%)?')
             # print('diff:', each_reg_unidecode, line.replace(' ', ''))
-            if each_reg_unidecode.search(line.replace(' ', '')):
+            if each_reg_unidecode.search(line_replaced):
                 print('ignore:', 'ok')
                 has_ignore = True
                 break
@@ -124,79 +144,87 @@ def parse(text, lang=tr.ja()):
             continue
 
         # fuzzywuzzyによる近似探索
-        extract = process.extractOne(line, list(choices))
-        # print('ext1:', extract, line)
-        if extract[1] <= 80:
-            extract = process.extractOne(line, list(choices), scorer=fuzz.partial_ratio)
-            # print('ext2:', extract)
+        # extract = process.extractOne(line, list(choices))
+        # # print('ext1:', extract, line)
+        # if extract[1] <= 80:
+        #     extract = process.extractOne(line, list(choices), scorer=fuzz.partial_ratio)
+        #     # print('ext2:', extract)
+        #
+        # if extract[1] > 90:
+        #     # stat = choices[extract[0]]
+        #     # results[stat] = [[stat, '', '']]
+        #     continue
 
-        if extract[1] > 90:
-            stat = choices[extract[0]]
-            results += [[stat, '', '']]
+        # 14-15件（熟知の数値[3]がOCRの問題で取得できない時がある）
+        if num_reg.fullmatch(line_replaced):
+            if line_replaced != '0':
+                values += [line_replaced]
+
+    for k in results.keys():
+        if k == lang.atk_base:
+            results[k] = int(values[1].replace(',', ''))
+            continue
+        if k == lang.atk_add:
+            results[k] = int(values[positions[k]].replace(',', '').replace('+', ''))
+            continue
+        if k == lang.cr:
+            results[k] = float(values[positions[k]].replace('%', ''))
+            continue
+        if k == lang.cd:
+            results[k] = float(values[positions[k]].replace('%', ''))
+            continue
+        if k == lang.er:
+            results[k] = float(values[positions[k]].replace('%', ''))
+            continue
+        if k == lang.em:
+            if values[positions[k]:positions[k]+1]:
+                results[k] = int(values[positions[k]].replace(',', ''))
+            else:
+                results[k] = 0
             continue
 
-        # 14件（熟知の数値がOCRの問題で取得できない時がある）
-        if num_reg.fullmatch(line.replace(' ', '')):
-            if line.replace(' ', '') != '0':
-                values += [line.replace(' ', '')]
-
-    for result in results:
-        # 攻撃力
-        if result[0] == lang.atk:
-            result[1] = values[1].replace(',', '')
-            result[2] = values[positions['atk_add']].replace(',', '').replace('+', '')
-            continue
-
-        # 会心率
-        if result[0] == lang.cr:
-            result[1] = values[positions[lang.cr]].replace('%', '')
-            continue
-
-        # 会心ダメージ
-        if result[0] == lang.cd:
-            result[1] = values[positions[lang.cd]].replace('%', '')
-            continue
+    results[lang.atk] = results[lang.atk_base] + results[lang.atk_add]
 
     print(results)
     return results
 
 
 # スコア付け
-def rate(results, options={}, lang=tr.ja()):
+def rate(results, options, lang=tr.ja()):
     score = 100
     ideal_results = []
-    cr = 0.5
-    cd = 100
+    atk_rate = 1
     atk_base = 0
     atk_add = 0
+    cr = 0.5
+    cd = 100
 
-    for result in results:
-        stat, value, value_add = result
-        # 攻撃力
-        if stat == lang.atk:
-            atk_base = int(value)
-            atk_add = int(value_add)
+    for k, v in results.items():
+        if k == lang.atk_base:
+            atk_base = v
             continue
-
-        # 会心率
-        elif stat == lang.cr:
-            cr = float(value) / 100
+        if k == lang.atk_add:
+            atk_add = v
             continue
-
-        # 会心ダメージ
-        if stat == lang.cd:
-            cd = float(value) / 100
+        if k == lang.cr:
+            cr = v / 100
+            continue
+        if k == lang.cd:
+            cd = v / 100
             continue
 
     # calc
-    atk_rate = 1
     n_atk = atk_base * atk_rate
     x_atk = 0 if atk_base == 0 else (atk_add / atk_base)
     c_atk = n_atk
-    exp_dmg_x = calc_exp_dmg(n_atk, x_atk + 0.0466, c_atk, cr, cd)
-    exp_dmg_cr = calc_exp_dmg(n_atk, x_atk, c_atk, cr + 0.0311, cd)
-    exp_dmg_cd = calc_exp_dmg(n_atk, x_atk, c_atk, cr, cd + 0.0622)
+    # default
     exp_dmg_v = calc_exp_dmg(n_atk, x_atk, c_atk, cr, cd)
+    # atk 46.6%
+    exp_dmg_x = calc_exp_dmg(n_atk, x_atk + 0.0466, c_atk, cr, cd)
+    # cr 31.1%
+    exp_dmg_cr = calc_exp_dmg(n_atk, x_atk, c_atk, cr + 0.0311, cd)
+    # cd 62.2%
+    exp_dmg_cd = calc_exp_dmg(n_atk, x_atk, c_atk, cr, cd + 0.0622)
 
     # 理想値
     a = x_atk + cr * 1.5 + cd * 0.75
@@ -230,30 +258,33 @@ def rate(results, options={}, lang=tr.ja()):
     print(f'c_n:{c_n}')
     print(f'a_:{a_}')
     print('============')
-    # 攻撃力×会心（期待値）：3793
+    # 攻撃力×会心（期待値）
     print(f'exp_dmg_v:{exp_dmg_v}')
     print(f'exp_dmg_x:{exp_dmg_x}')
     print(f'exp_dmg_cr:{exp_dmg_cr}')
     print(f'exp_dmg_cd:{exp_dmg_cd}')
-    print(f'ideal_cr:{ideal_cr}')
-    print(f'ideal_cd:{ideal_cd}')
     print(f'ideal_exp_dmg_v:{ideal_exp_dmg_v}')
     print(f'dmg_diff_rate:{dmg_diff_rate}')
+    print(f'ideal_cr:{ideal_cr}')
+    print(f'ideal_cd:{ideal_cd}')
     print('============')
 
-    # 理想値とのダメージ差：-6.95%
+    # 理想値とのダメージ差
     print(f'理想値とのダメージ差：{dmg_diff_rate:.2%}')
-    # 同じ装備スコアの理想値：+攻撃力(緑)　842
-    print(f'+攻撃力(緑)：{int(ideal_x * atk_base):,}')
-    # 同じ装備スコアの理想値：会心率　90%
+    # 同じ装備スコアの理想値
+    print(f'+攻撃力(緑)：{round(ideal_x * atk_base):,}')
+    # 同じ装備スコアの理想値
     print(f'会心率：{ideal_cr:.1%}')
-    # 同じ装備スコアの理想値：会心ダメージ 180.1%
+    # 同じ装備スコアの理想値
     print(f'会心ダメージ：{ideal_cd:.1%}')
+    print('============')
 
-    ideal_results += [int(ideal_x * atk_base)]
+    ideal_results += [dmg_diff_rate]
+    ideal_results += [round(ideal_x * atk_base)]
     ideal_results += [ideal_cr]
     ideal_results += [ideal_cd]
-    ideal_results += [dmg_diff_rate]
+    ideal_results += [round(exp_dmg_v)]
+    ideal_results += [round(ideal_exp_dmg_v)]
 
     # score
     dmg_diff_rate_score = round(dmg_diff_rate * 100, 1)
@@ -265,7 +296,7 @@ def rate(results, options={}, lang=tr.ja()):
     else:
         score += dmg_diff_rate_score * 5
 
-    print(score, ideal_results)
+    print(f'スコア：{score}点', ideal_results)
     return score, ideal_results
 
 

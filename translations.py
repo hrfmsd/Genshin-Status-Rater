@@ -25,6 +25,8 @@ class Translation:
         self.er = 'Energy Recharge'
         self.em = 'Elemental Mastery'
         self.atk = 'ATK'
+        self.atk_base = 'ATK Base'
+        self.atk_add = 'ATK Add'
         self.cd = 'CRIT DMG'
         self.cr = 'CRIT Rate'
         self.phys = 'Physical DMG'
@@ -46,12 +48,15 @@ class Translation:
         self.replace = {}
 
         # text for bot messages
+        self.title = 'Status Rating'
         self.lvl = 'Level'
         self.score = 'Gear Score'
         self.score_suffix = ''
-        self.main_score = 'Main Stat Rating'
-        self.sub_score = 'Substat Rating'
-        self.art_level = 'Artifact Level'
+        self.exp_dmg = 'Expected Damage'
+        self.ideal_dmg_diff = 'DMG Diff'
+        self.current_val = '現在値'
+        self.ideal_val = '理想値'
+        self.ideal_dmg_diff = 'DMG Diff'
         self.join = f'For issues, join the [Artifact Rater Server]({self.SERVER_URL})'
         self.feedback = f'Feedback received, please join {self.SERVER_URL} if you\'d like to add more details'
         self.deprecated = 'Deprecated, please use the `-user lang <lang>` command to set your language'
@@ -219,6 +224,8 @@ class ja(Translation):
         self.er = '元素チャージ効率'
         self.em = '元素熟知'
         self.atk = '攻撃力'
+        self.atk_base = '基礎攻撃力'
+        self.atk_add = '加算攻撃力'
         self.cd = '会心ダメージ'
         self.cr = '会心率'
         self.phys = '物理ダメージ'
@@ -249,12 +256,12 @@ class ja(Translation):
             'X': '',
         }
 
+        self.title = 'ステータス診断'
         self.lvl = 'レベル'
         self.score = 'スコア'
         self.score_suffix = '点'
-        self.main_score = 'メインステータス評価'
-        self.sub_score = 'サブステータス評価'
-        # self.art_level = '聖遺物レベル'
+        self.exp_dmg = 'ダメージ期待値'
+        self.ideal_dmg_diff = '理想値とのダメージ差'
         self.join = f'[公式サーバー]({self.SERVER_URL})に参加する'
         self.feedback = f'フィードバックを受け取りました。詳細を追加したい場合は、 ({self.SERVER_URL})に参加してください。'
         self.set_lang = 'Language set to Japanese'
