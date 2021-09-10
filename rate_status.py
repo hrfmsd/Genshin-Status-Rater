@@ -315,14 +315,16 @@ def calc_exp_dmg(n, x, c, cr, cd):
 if __name__ == '__main__':
     if sys.version_info[0] == 3 and sys.version_info[1] >= 8 and sys.platform.startswith('win'):
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    # 34 / taru
+    url = 'https://media.discordapp.net/attachments/884021052575985745/885676688367824956/2021-09-10_090247.png'
     # 35 / kannu
-    url = 'https://media.discordapp.net/attachments/884021052575985745/884384521993203752/unknown.png'
+    # url = 'https://media.discordapp.net/attachments/884021052575985745/884384521993203752/unknown.png'
     # 35 / raiden
     # url = 'https://media.discordapp.net/attachments/884021052575985745/884299376917381171/unknown.png'
     # url = 'https://media.discordapp.net/attachments/884021052575985745/884041657790652436/unknown.png'
     # url = 'https://media.discordapp.net/attachments/884021052575985745/884032862591004682/unknown.png'
     # 34 / ayaka
-    url = 'https://media.discordapp.net/attachments/875974646195970118/882272611646726204/unknown.png'
+    # url = 'https://media.discordapp.net/attachments/875974646195970118/882272611646726204/unknown.png'
     # 34 /
     # url = 'https://media.discordapp.net/attachments/875974646195970118/882272755163234324/unknown.png'
     lang = tr.ja()
