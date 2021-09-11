@@ -261,12 +261,12 @@ def rate(results, options, lang=tr.ja()):
         ideal_cr = (a_ - 2.375) / 3
         ideal_cd = 0.5
         ideal_x = a_ - 1.5 * ideal_cr - 0.375
-        ideal_results['score_message'] = '会心率ダメ比率=1:2を維持しながら聖遺物を厳選しよう'
+        ideal_results['score_message'] = '会心率50%：会心ダメージ100%を目標に育成しよう'
     elif a_ < 4.25:
         ideal_cr = (a_ + 1 + math.sqrt(math.pow((a_ + 1), 2) - 13.5)) / 9
         ideal_cd = ideal_cr * 2
         ideal_x = a - 3 * ideal_cr
-        ideal_results['score_message'] = '聖遺物厳選の旅は続く……'
+        ideal_results['score_message'] = '会心率ダメ比率=1:2を維持しながら聖遺物を厳選しよう'
     else:
         ideal_cr = 1
         ideal_cd = (a_ - 1.25) * 2 / 3
@@ -337,8 +337,10 @@ def calc_exp_dmg(n, x, c, cr, cd):
 if __name__ == '__main__':
     if sys.version_info[0] == 3 and sys.version_info[1] >= 8 and sys.platform.startswith('win'):
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    # 35 / hokuto
+    url = 'https://media.discordapp.net/attachments/884021052575985745/886183282172116992/unknown.png'
     # 35 / kazuha
-    url = 'https://media.discordapp.net/attachments/884021052575985745/886141996647981078/unknown.png'
+    # url = 'https://media.discordapp.net/attachments/884021052575985745/886141996647981078/unknown.png'
     # 34 / yoimiya
     # url = 'https://media.discordapp.net/attachments/884021052575985745/886130399737184276/unknown.png'
     # 34 / taru
