@@ -421,16 +421,6 @@ async def rate(ctx):
 
     embed_thumbnail_url = get_score_icon_url(score)
 
-    # 埋め込み
-    embed = discord.Embed(
-        title=lang.title,
-        color=color,
-        url=url,
-        timestamp=datetime.now(JST),
-    )
-    # 送信者情報セット
-    embed.set_author(name=ctx.message.author.display_name, icon_url=ctx.message.author.avatar_url)
-
     # スコア表示
     dmg_diff_rate = ideal_results['dmg_diff_rate']
     ideal_atk_add = ideal_results['ideal_atk_add']
@@ -456,8 +446,20 @@ async def rate(ctx):
     msg_em_effect_3 = f'{results[lang.em_effect_3]:.1%}'
     msg_em_effect_all = f'({lang.em_effect_1} : {msg_em_effect_1} / {lang.em_effect_2} : {msg_em_effect_2} / {lang.em_effect_3} : {msg_em_effect_3})'
 
+    # 埋め込み
+    embed = discord.Embed(
+        title=lang.title,
+        description=score_message,
+        color=color,
+        url=url,
+        timestamp=datetime.now(JST),
+    )
+    # 送信者情報セット
+    embed.set_author(name=ctx.message.author.display_name, icon_url=ctx.message.author.avatar_url)
+
+
     embed.add_field(name=f'**{lang.score}: {score}{lang.score_suffix}**',
-                    value=f'> {lang.ideal_dmg_diff}: {dmg_diff_rate:.2%}\n> {lang.exp_dmg}: {msg_exp_dmg:,} / {msg_ideal_exp_dmg:,}\n> {score_message}\n' + msg_blank,
+                    value=f'> {lang.ideal_dmg_diff}: {dmg_diff_rate:.2%}\n> {lang.exp_dmg}: {msg_exp_dmg:,} / {msg_ideal_exp_dmg:,}\n' + msg_blank,
                     inline=False)
     embed.set_thumbnail(url=embed_thumbnail_url)
 
