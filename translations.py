@@ -265,7 +265,7 @@ class ja(Translation):
         self.lvl = 'レベル'
         self.score = 'スコア'
         self.score_suffix = '点'
-        self.exp_dmg = 'ダメージ期待値（攻撃力×会心）'
+        self.exp_dmg = 'ダメージ期待値(攻撃力×会心)'
         self.ideal_dmg_diff = '理想値とのダメージ差'
         self.join = f'[公式サーバー]({self.SERVER_URL})に参加する'
         self.feedback = f'フィードバックを受け取りました。詳細を追加したい場合は、 ({self.SERVER_URL})に参加してください。'

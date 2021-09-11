@@ -457,7 +457,6 @@ async def rate(ctx):
     # 送信者情報セット
     embed.set_author(name=ctx.message.author.display_name, icon_url=ctx.message.author.avatar_url)
 
-
     embed.add_field(name=f'**{lang.score}: {score}{lang.score_suffix}**',
                     value=f'> {lang.ideal_dmg_diff}: {dmg_diff_rate:.2%}\n> {lang.exp_dmg}: {msg_exp_dmg:,} / {msg_ideal_exp_dmg:,}\n' + msg_blank,
                     inline=False)
@@ -465,7 +464,8 @@ async def rate(ctx):
 
     # 攻撃力
     embed.add_field(name=f'**{lang.atk}**',
-                    value=f'> {lang.current_val}: {msg_atk}\n> {lang.ideal_val}: {mgs_ideal_atk}\n' + msg_blank)
+                    value=f'> {lang.current_val}: {msg_atk}\n> {lang.ideal_val}: {mgs_ideal_atk}\n' + msg_blank,
+                    inline=False)
     # 会心率
     embed.add_field(name=f'**{lang.cr}**',
                     value=f'> {lang.current_val}: {msg_cr}\n> {lang.ideal_val}: {msg_ideal_cr}\n' + msg_blank)
@@ -473,7 +473,8 @@ async def rate(ctx):
     embed.add_field(name=f'**{lang.cd}**',
                     value=f'> {lang.current_val}: {msg_cd}\n> {lang.ideal_val}: {msg_ideal_cd}\n' + msg_blank)
     # 元素チャージ効率
-    embed.add_field(name=f'**{lang.er}**', value=f'> {lang.current_val}: {msg_er}\n' + msg_blank)
+    embed.add_field(name=f'**{lang.er}**',
+                    value=f'> {lang.current_val}: {msg_er}\n' + msg_blank)
     # 元素熟知
     embed.add_field(name=f'**{lang.em}**',
                     value=f'> {lang.current_val}: {msg_em}\n> {msg_em_effect_all}\n' + msg_blank)
