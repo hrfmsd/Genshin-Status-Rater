@@ -337,8 +337,12 @@ def calc_exp_dmg(n, x, c, cr, cd):
 if __name__ == '__main__':
     if sys.version_info[0] == 3 and sys.version_info[1] >= 8 and sys.platform.startswith('win'):
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    # 35 / sho
+    url = 'https://media.discordapp.net/attachments/884021052575985745/886188859795329034/unknown.png'
+    # 34 / syanrin
+    # url = 'https://media.discordapp.net/attachments/884021052575985745/886187208636260352/unknown.png'
     # 35 / hokuto
-    url = 'https://media.discordapp.net/attachments/884021052575985745/886183282172116992/unknown.png'
+    # url = 'https://media.discordapp.net/attachments/884021052575985745/886183282172116992/unknown.png'
     # 35 / kazuha
     # url = 'https://media.discordapp.net/attachments/884021052575985745/886141996647981078/unknown.png'
     # 34 / yoimiya
