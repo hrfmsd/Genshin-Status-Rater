@@ -527,8 +527,10 @@ def get_score_icon_url(score):
         url = 'https://media.discordapp.net/attachments/884348128441024523/886134000291307520/score_60_70.jpg'
     elif score <= 80:
         url = 'https://media.discordapp.net/attachments/884348128441024523/884382339088670741/score_80.jpg'
+    elif score <= 85:
+        url = 'https://media.discordapp.net/attachments/884348128441024523/886195050151813120/score_80_85.jpg'
     elif score <= 90:
-        url = 'https://media.discordapp.net/attachments/884348128441024523/884373604601577482/score_90.png'
+        url = 'https://media.discordapp.net/attachments/884348128441024523/886196092092436510/score_85_90.jpg'
     elif score <= 95:
         url = 'https://media.discordapp.net/attachments/884348128441024523/884373604601577482/score_90.gif'
     else:
