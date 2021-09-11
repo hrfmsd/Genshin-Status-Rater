@@ -474,10 +474,12 @@ async def rate(ctx):
                     value=f'> {lang.current_val}: {msg_cd}\n> {lang.ideal_val}: {msg_ideal_cd}\n' + msg_blank)
     # 元素チャージ効率
     embed.add_field(name=f'**{lang.er}**',
-                    value=f'> {lang.current_val}: {msg_er}\n' + msg_blank)
+                    value=f'> {lang.current_val}: {msg_er}\n' + msg_blank,
+                    inline=False)
     # 元素熟知
     embed.add_field(name=f'**{lang.em}**',
-                    value=f'> {lang.current_val}: {msg_em}\n> {msg_em_effect_all}\n' + msg_blank)
+                    value=f'> {lang.current_val}: {msg_em}\n> {msg_em_effect_all}\n' + msg_blank,
+                    inline=False)
 
     embed.set_footer(text='\n基本〜高級ステータスの画像を添付し本文に`/rate`をつけて投稿してください\nスコアは攻撃力、会心率、会心ダメージにのみ言及したものです\n' + msg_blank)
 
