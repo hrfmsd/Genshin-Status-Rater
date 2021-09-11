@@ -73,10 +73,14 @@ def parse(text, lang=tr.ja()):
         lang.atk: 0,
         lang.atk_base: 0,
         lang.atk_add: 0,
+        lang.atk_add_rate: 0,
         lang.cr: 0,
         lang.cd: 0,
         lang.er: 0,
         lang.em: 0,
+        lang.em_effect_1: 0,
+        lang.em_effect_2: 0,
+        lang.em_effect_3: 0,
     }
 
     positions = {
@@ -171,6 +175,10 @@ def parse(text, lang=tr.ja()):
             continue
         if k == lang.atk_add:
             results[k] = int(values[positions[k]].replace(',', '').replace('+', ''))
+        if k == lang.atk_add_rate:
+            atk_base = int(values[positions[lang.atk_base]].replace(',', '').replace('+', ''))
+            atk_add = int(values[positions[lang.atk_add]].replace(',', '').replace('+', ''))
+            results[k] = round(float(atk_add / atk_base) * 100, 1)
             continue
         if k == lang.cr:
             results[k] = float(values[positions[k]].replace('%', ''))
@@ -190,6 +198,11 @@ def parse(text, lang=tr.ja()):
 
     results[lang.atk] = results[lang.atk_base] + results[lang.atk_add]
 
+    if results[lang.em] > 0:
+        results[lang.em_effect_1] = round((1.0 * 25 * results[lang.em] / (9 * (results[lang.em] + 1400))), 3)
+        results[lang.em_effect_2] = round(16 * results[lang.em] / (results[lang.em] + 2000), 3)
+        results[lang.em_effect_3] = round(1.6 * 25 * results[lang.em] / (9 * (results[lang.em] + 1400)), 3)
+
     print('============\n', results)
     return results
 
@@ -197,7 +210,9 @@ def parse(text, lang=tr.ja()):
 # スコア付け
 def rate(results, options, lang=tr.ja()):
     score = 100
-    ideal_results = []
+    ideal_results = {
+        'score_message': ''
+    }
     atk_rate = 1
     atk_base = 0
     atk_add = 0
@@ -220,6 +235,7 @@ def rate(results, options, lang=tr.ja()):
 
     # calc
     n_atk = atk_base * atk_rate
+    # 攻撃力％：x
     x_atk = 0 if atk_base == 0 else (atk_add / atk_base)
     c_atk = n_atk
     # default
@@ -231,26 +247,31 @@ def rate(results, options, lang=tr.ja()):
     # cd 62.2%
     exp_dmg_cd = calc_exp_dmg(n_atk, x_atk, c_atk, cr, cd + 0.0622)
 
-    # 理想値
+    # 理想値：a（攻撃・会心の装備スコア）%
     a = x_atk + cr * 1.5 + cd * 0.75
     c_n = c_atk / n_atk
     a_ = a + c_n - 1
+
     if a_ < 2.525:
         ideal_cr = 0.05
         ideal_cd = 0.5
         ideal_x = a_ - 1.5 * 0.05 - 0.375
+        ideal_results['score_message'] = '会心率25%以上を確保できるまでは攻撃力をあげよう'
     elif a_ < 2.776:
         ideal_cr = (a_ - 2.375) / 3
         ideal_cd = 0.5
         ideal_x = a_ - 1.5 * ideal_cr - 0.375
+        ideal_results['score_message'] = '会心率ダメ比率=1:2を維持しながら聖遺物を厳選しよう'
     elif a_ < 4.25:
         ideal_cr = (a_ + 1 + math.sqrt(math.pow((a_ + 1), 2) - 13.5)) / 9
         ideal_cd = ideal_cr * 2
         ideal_x = a - 3 * ideal_cr
+        ideal_results['score_message'] = '聖遺物厳選の旅は続く……'
     else:
         ideal_cr = 1
         ideal_cd = (a_ - 1.25) * 2 / 3
         ideal_x = a - 0.75 * ideal_cd - 1.5
+        ideal_results['score_message'] = 'ほぼ完璧なので他のキャラにも目を向けてあげよう'
 
     ideal_exp_dmg_v = calc_exp_dmg(n_atk, ideal_x, c_atk, ideal_cr, ideal_cd)
     dmg_diff_rate = (exp_dmg_v / ideal_exp_dmg_v - 1)
@@ -284,12 +305,13 @@ def rate(results, options, lang=tr.ja()):
     print(f'会心ダメージ：{ideal_cd:.1%}')
     print('============')
 
-    ideal_results += [dmg_diff_rate]
-    ideal_results += [round(ideal_x * atk_base)]
-    ideal_results += [ideal_cr]
-    ideal_results += [ideal_cd]
-    ideal_results += [round(exp_dmg_v)]
-    ideal_results += [round(ideal_exp_dmg_v)]
+    ideal_results['dmg_diff_rate'] = dmg_diff_rate
+    ideal_results['ideal_atk_add'] = round(ideal_x * atk_base)
+    ideal_results['ideal_atk_add_rate'] = round(ideal_x * atk_base / atk_base, 3)
+    ideal_results['ideal_cr'] = ideal_cr
+    ideal_results['ideal_cd'] = ideal_cd
+    ideal_results['exp_dmg_v'] = round(exp_dmg_v)
+    ideal_results['ideal_exp_dmg_v'] = round(ideal_exp_dmg_v)
 
     # score
     dmg_diff_rate_score = round(dmg_diff_rate * 100, 1)
@@ -315,8 +337,10 @@ def calc_exp_dmg(n, x, c, cr, cd):
 if __name__ == '__main__':
     if sys.version_info[0] == 3 and sys.version_info[1] >= 8 and sys.platform.startswith('win'):
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    # 35 / kazuha
+    url = 'https://media.discordapp.net/attachments/884021052575985745/886141996647981078/unknown.png'
     # 34 / yoimiya
-    url = 'https://media.discordapp.net/attachments/884021052575985745/886130399737184276/unknown.png'
+    # url = 'https://media.discordapp.net/attachments/884021052575985745/886130399737184276/unknown.png'
     # 34 / taru
     # url = 'https://media.discordapp.net/attachments/884021052575985745/885676688367824956/2021-09-10_090247.png'
     # 35 / kannu

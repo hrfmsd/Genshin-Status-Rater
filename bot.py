@@ -24,6 +24,7 @@ HEROKU_API_KEY = os.getenv('HEROKU_API_KEY')
 HEROKU_APP_ID = os.getenv('HEROKU_APP_ID')
 DATABASE_URL = os.getenv('DATABASE_URL')
 SHARDS = int(os.getenv('SHARDS', 10))
+
 # タイムゾーンの生成
 JST = timezone(timedelta(hours=+9), 'JST')
 
@@ -330,7 +331,7 @@ async def rate(ctx):
     preset = None
     results = []
     score = 0
-    ideal_results = []
+    ideal_results = {}
     for word in msg:
         if not url and validators.url(word):
             url = word
@@ -431,33 +432,51 @@ async def rate(ctx):
     embed.set_author(name=ctx.message.author.display_name, icon_url=ctx.message.author.avatar_url)
 
     # スコア表示
-    ideal_atk_add = ideal_results[1]
-    ideal_cr = ideal_results[2]
-    ideal_cd = ideal_results[3]
-    msg_exp_dmg = ideal_results[4]
-    msg_ideal_exp_dmg = ideal_results[5]
-    msg_atk = f'{(results[lang.atk_base] + results[lang.atk_add]):,} ({results[lang.atk_base]:,} + {results[lang.atk_add]:,})'
-    mgs_ideal_atk = f'{(results[lang.atk_base] + ideal_atk_add):,} ({results[lang.atk_base]:,} + {ideal_atk_add:,})'
+    dmg_diff_rate = ideal_results['dmg_diff_rate']
+    ideal_atk_add = ideal_results['ideal_atk_add']
+    ideal_atk_add_rate = ideal_results['ideal_atk_add_rate']
+    ideal_cr = ideal_results['ideal_cr']
+    ideal_cd = ideal_results['ideal_cd']
+    score_message = ideal_results['score_message']
+
+    msg_blank = '\u200b'
+    # msg_space = '\u3000'
+    msg_exp_dmg = ideal_results['exp_dmg_v']
+    msg_ideal_exp_dmg = ideal_results['ideal_exp_dmg_v']
+    msg_atk = f'{(results[lang.atk_base] + results[lang.atk_add]):,} = {results[lang.atk_base]:,} + {results[lang.atk_add]:,} ({results[lang.atk_add_rate]}%)'
+    mgs_ideal_atk = f'{(results[lang.atk_base] + ideal_atk_add):,} = {results[lang.atk_base]:,} + {ideal_atk_add:,} ({ideal_atk_add_rate:.1%})'
     msg_cr = f'{results[lang.cr]}%'
     msg_ideal_cr = f'{ideal_cr:.1%}'
     msg_cd = f'{results[lang.cd]}%'
     msg_ideal_cd = f'{ideal_cd:.1%}'
     msg_er = f'{results[lang.er]}%'
     msg_em = f'{results[lang.em]:,}'
+    msg_em_effect_1 = f'{results[lang.em_effect_1]:.1%}'
+    msg_em_effect_2 = f'{results[lang.em_effect_2]:.1%}'
+    msg_em_effect_3 = f'{results[lang.em_effect_3]:.1%}'
+    msg_em_effect_all = f'({lang.em_effect_1} : {msg_em_effect_1} / {lang.em_effect_2} : {msg_em_effect_2} / {lang.em_effect_3} : {msg_em_effect_3})'
 
     embed.add_field(name=f'**{lang.score}: {score}{lang.score_suffix}**',
-                    value=f'> {lang.ideal_dmg_diff}: {ideal_results[0]:.2%}\n> {lang.exp_dmg}: {msg_exp_dmg:,} / {msg_ideal_exp_dmg:,}\n',
+                    value=f'> {lang.ideal_dmg_diff}: {dmg_diff_rate:.2%}\n> {lang.exp_dmg}: {msg_exp_dmg:,} / {msg_ideal_exp_dmg:,}\n> {score_message}\n' + msg_blank,
                     inline=False)
     embed.set_thumbnail(url=embed_thumbnail_url)
+
+    # 攻撃力
     embed.add_field(name=f'**{lang.atk}**',
-                    value=f'> {lang.current_val}: {msg_atk}\n> {lang.ideal_val}: {mgs_ideal_atk}\n')
+                    value=f'> {lang.current_val}: {msg_atk}\n> {lang.ideal_val}: {mgs_ideal_atk}\n' + msg_blank)
+    # 会心率
     embed.add_field(name=f'**{lang.cr}**',
-                    value=f'> {lang.current_val}: {msg_cr}\n> {lang.ideal_val}: {msg_ideal_cr}\n')
+                    value=f'> {lang.current_val}: {msg_cr}\n> {lang.ideal_val}: {msg_ideal_cr}\n' + msg_blank)
+    # 会心ダメージ
     embed.add_field(name=f'**{lang.cd}**',
-                    value=f'> {lang.current_val}: {msg_cd}\n> {lang.ideal_val}: {msg_ideal_cd}\n')
-    embed.add_field(name=f'**{lang.er}**', value=f'> {lang.current_val}: {msg_er}\n')
-    embed.add_field(name=f'**{lang.em}**', value=f'> {lang.current_val}: {msg_em}\n')
-    embed.set_footer(text='\n基本〜高級ステータスまでの画像を添付して本文に`/rate`をつけて投稿してください\n')
+                    value=f'> {lang.current_val}: {msg_cd}\n> {lang.ideal_val}: {msg_ideal_cd}\n' + msg_blank)
+    # 元素チャージ効率
+    embed.add_field(name=f'**{lang.er}**', value=f'> {lang.current_val}: {msg_er}\n' + msg_blank)
+    # 元素熟知
+    embed.add_field(name=f'**{lang.em}**',
+                    value=f'> {lang.current_val}: {msg_em}\n> {msg_em_effect_all}\n' + msg_blank)
+
+    embed.set_footer(text='\n基本〜高級ステータスまでの画像を添付して本文に`/rate`をつけて投稿してください\nスコアは攻撃力、会心率、会心ダメージにのみ言及したものです\n' + msg_blank)
 
     await send(ctx, embed=embed)
 
