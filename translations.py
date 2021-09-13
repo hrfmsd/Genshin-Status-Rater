@@ -310,13 +310,16 @@ class ja(Translation):
 
         self.help_footer = ''
 
+        self.atK_add_buff_url = 'https://cdn.discordapp.com/attachments/884348128441024523/886896956302037012/gehishin_atk_add_buff.jpg'
+        self.atK_add_buff_description = f'ベネット、九条裟羅の＋攻撃力％は67〜185%（[参考]({self.atK_add_buff_url})）'
+
         self.score_footer = f'''
         基本〜高級ステータスの画像を添付し本文に`/rate`をつけて投稿してください
-        スコアは攻撃力、会心率、会心ダメージの配分に言及したものです
-        ベネット、九条裟羅の＋攻撃力％は67〜185%[参考](https://cdn.discordapp.com/attachments/884348128441024523/886896956302037012/gehishin_atk_add_buff.jpg)
-        増幅系：蒸発、溶解反応によるダメージ
-        転化系：過負荷、超電導、感電、氷砕き、拡散反応によるダメージ
-        吸収量：結晶シールドのダメージ吸収量増加
+        算出条件など詳細は`/help`を確認してください
+       
+        > 増幅系：蒸発、溶解反応によるダメージ
+        > 転化系：過負荷、超電導、感電、氷砕き、拡散反応によるダメージ
+        > 吸収量：結晶シールドのダメージ吸収量増加
         '''
 
 

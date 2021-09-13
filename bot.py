@@ -481,6 +481,11 @@ async def rate(ctx):
                     value=f'> {lang.current_val}: {msg_em}\n> {msg_em_effect_all}\n' + msg_blank,
                     inline=False)
 
+    # 補足
+    embed.add_field(name=msg_blank,
+                    value=lang.atK_add_buff_description + msg_blank,
+                    inline=False)
+
     embed.set_footer(text=lang.score_footer + msg_blank)
 
     await send(ctx, embed=embed)
