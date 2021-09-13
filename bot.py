@@ -481,7 +481,7 @@ async def rate(ctx):
                     value=f'> {lang.current_val}: {msg_em}\n> {msg_em_effect_all}\n' + msg_blank,
                     inline=False)
 
-    embed.set_footer(text='\n基本〜高級ステータスの画像を添付し本文に`/rate`をつけて投稿してください\nスコアは攻撃力、会心率、会心ダメージにのみ言及したものです\n' + msg_blank)
+    embed.set_footer(text=lang.score_footer + msg_blank)
 
     await send(ctx, embed=embed)
 

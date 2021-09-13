@@ -12,10 +12,10 @@ class Translation:
         # Supported by OCR Engine 2
         self.supported = True
 
-        self.SERVER_URL = 'https://discord.gg/SyGmBxds3M'
+        self.SERVER_URL = ''
         self.BOT_URL = 'https://discord.com/api/oauth2/authorize?client_id=878242722429931551&permissions=19456&scope=bot'
         self.GITHUB_URL = 'https://github.com/hrfmsd/Genshin-Status-Rater'
-        self.SAMPLE_URL = 'https://cdn.discordapp.com/attachments/787533173004173343/790751503475802122/unknown.png'
+        self.SAMPLE_URL = 'https://cdn.discordapp.com/attachments/875974646195970118/882272611646726204/unknown.png'
 
         # stats as they appear in-game
         self.hp = 'HP'
@@ -203,6 +203,9 @@ class Translation:
 
         self.help_footer = 'To change languages click on the corresponding flag below'
 
+        self.score_footer = f'''
+        '''
+
 
 class en(Translation):
     pass
@@ -269,7 +272,7 @@ class ja(Translation):
         self.ideal_dmg_diff = '理想値とのダメージ差'
         self.join = f'[公式サーバー]({self.SERVER_URL})に参加する'
         self.feedback = f'フィードバックを受け取りました。詳細を追加したい場合は、 ({self.SERVER_URL})に参加してください。'
-        self.set_lang = 'Language set to Japanese'
+        self.set_lang = '言語を日本語に変更しました。'
 
         self.err = 'エラー'
         self.err_not_found = 'エラー：画像またはURLが見つかりませんでした。同じメッセージで送信されたことを確認してください。'
@@ -278,13 +281,43 @@ class ja(Translation):
         self.err_unknown_ocr = 'エラー：OCRが不明なエラーで失敗しました。'
         self.err_unknown = '不明なエラーが発生しました。画像を確認してください。'
 
-        self.help_stats = '`stat`において`hp`、`hp%`、`def`、`def%`(防御力)、`atk`、`atk%`(攻撃力)、`er`(元素チャージ効率)、`em`(元素熟知)、`phys`(物理ダメージ)、`elem`(元素ダメージ)、`cr`(会心率)、`cd`(会心ダメージ)、`heal`(治癒効果)を使えることができます。'
+        self.help_stats = f'''
+        スコアや各理想値は下記を前提に算出しています。
+
+        - 会心率：会心ダメージの理想配分は１：２
+        - 聖遺物の攻撃力：会心率：会心ダメージの伸び率は1.5：１：２
+        - 聖遺物のサブOPにおける育成ボーナスは４段階あるので高スコアを優先する
+        - 会心率 <= 0.25においては攻撃力を伸ばす方がダメージ上昇効率が高い
+        - 0.25 <= 会心率 <= 0.5におけるダメージ上昇効率は2.5〜4.2
+        - 0.5 <= 会心率 <= 1におけるダメージ上昇効率は4.2〜4.5
+        - 特に会心率が0.7付近の時にダメージ上昇効率が4.5付近と最も高い
+        - 加算攻撃力比率:ar= 加算攻撃力（緑）/ 基礎攻撃力（白）
+        - 1.2 <= ar <= 1.3におけるダメージ上昇効率は4.35以上
+        - 加算攻撃力（緑）は固定値系やバフもすべて含めた割合とする
+        '''
 
         self.help_description = f'''
-		`-rate <image/url> [lvl=<レベル>] [<stat>=<デフォルトの重み付け> ...]`
+        ゲーム内ステータス詳細から理想的な攻撃力、会心率、会心ダメージの配分を調べることを目的とします。
 
-		{self.help_stats}
-		'''
+        同じメッセージに下記のコマンドと画像をセットで投稿してください。（サンプル画像は[こちら]({self.SAMPLE_URL})）
+
+        OSがWindows 10の場合は、`Shift + Windows + S`を押すことで簡単に画像をクリップボードにコピーすることができます。
+        
+        コマンド：
+        `/rate <image/url>`
+        {self.help_stats}
+        '''
+
+        self.help_footer = ''
+
+        self.score_footer = f'''
+        基本〜高級ステータスの画像を添付し本文に`/rate`をつけて投稿してください
+        スコアは攻撃力、会心率、会心ダメージの配分に言及したものです
+        ベネット、九条裟羅の＋攻撃力％は67〜185%[参考](https://cdn.discordapp.com/attachments/884348128441024523/886896956302037012/gehishin_atk_add_buff.jpg)
+        増幅系：蒸発、溶解反応によるダメージ
+        転化系：過負荷、超電導、感電、氷砕き、拡散反応によるダメージ
+        吸収量：結晶シールドのダメージ吸収量増加
+        '''
 
 
 languages = {lang.id: lang for lang in [en(), ja()]}

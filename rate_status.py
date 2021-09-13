@@ -222,7 +222,6 @@ def rate(results, options, lang=tr.ja()):
     ideal_results = {
         'score_message': ''
     }
-    atk_rate = 1
     atk_base = 0
     atk_add = 0
     cr = 0.5
@@ -242,89 +241,107 @@ def rate(results, options, lang=tr.ja()):
             cd = v / 100
             continue
 
-    # calc
-    n_atk = atk_base * atk_rate
-    # 攻撃力％：x
-    x_atk = 0 if atk_base == 0 else (atk_add / atk_base)
+    # calc（攻撃力％：会心率：会心ダメージ=1.5：1：2）
+    n_atk = atk_base * 1
+    atk_add_rate = 0 if atk_base == 0 else (atk_add / atk_base)
     c_atk = n_atk
-    # default
-    exp_dmg_v = calc_exp_dmg(n_atk, x_atk, c_atk, cr, cd)
-    # atk 46.6%
-    exp_dmg_x = calc_exp_dmg(n_atk, x_atk + 0.0466, c_atk, cr, cd)
-    # cr 31.1%
-    exp_dmg_cr = calc_exp_dmg(n_atk, x_atk, c_atk, cr + 0.0311, cd)
-    # cd 62.2%
-    exp_dmg_cd = calc_exp_dmg(n_atk, x_atk, c_atk, cr, cd + 0.0622)
+    exp_dmg_v = calc_exp_dmg(n_atk, atk_add_rate, c_atk, cr, cd)
 
-    # 理想値：a（攻撃・会心の装備スコア）%
-    a = x_atk + cr * 1.5 + cd * 0.75
-    c_n = c_atk / n_atk
-    a_ = a + c_n - 1
+    # 理想値計算：ダメージ上昇効率で場合分けする
+    # 会心率：会心ダメージの理想配分は１：２
+    # 聖遺物の攻撃力：会心率：会心ダメージの伸び率は1.5：１：２
+    # 聖遺物のサブOPにおける実際の伸び率は運ゲーなので高スコアを優先する
+    # 会心率 <= 0.25においては攻撃力を伸ばす方がダメージ上昇効率が高い
+    # 0.25 <= 会心率 <= 0.5におけるダメージ上昇効率は2.5〜4.2
+    # 0.5 <= 会心率 <= 1におけるダメージ上昇効率は4.2〜4.5
+    # 特に会心率が0.7付近の時にダメージ上昇効率が4.5付近と最も高い
+    # 加算攻撃力比率:ar= 加算攻撃力（緑）/ 基礎攻撃力（白）
+    # 1.2 <= ar <= 1.3におけるダメージ上昇効率は会心系のそれよりも高い(4.35以上)
+    # 加算攻撃力（緑）は固定値系やバフもすべて含めた割合とする
 
-    if a_ < 2.525:
-        ideal_cr = 0.05
-        ideal_cd = 0.5
-        ideal_x = a_ - 1.5 * 0.05 - 0.375
-        ideal_results['score_message'] = '会心率25%以上を確保できるまでは攻撃力をあげよう'
-    elif a_ < 2.776:
-        ideal_cr = (a_ - 2.375) / 3
-        ideal_cd = 0.5
-        ideal_x = a_ - 1.5 * ideal_cr - 0.375
-        ideal_results['score_message'] = '会心率50%：会心ダメージ100%を目標に育成しよう'
-    elif a_ < 4.25:
-        ideal_cr = (a_ + 1 + math.sqrt(math.pow((a_ + 1), 2) - 13.5)) / 9
-        ideal_cd = ideal_cr * 2
-        ideal_x = a - 3 * ideal_cr
-        ideal_results['score_message'] = '会心率ダメ比率=1:2を維持しながら聖遺物を厳選しよう'
+    ideal_atk_add_rate = 1.2
+    ideal_cr = 0.7
+    ideal_cd = 1.4
+
+    # 攻撃・会心における装備スコア計算
+    stat_rate_limit_low = 2.45
+    stat_rate_base = 2.828
+    stat_rate = (1 + atk_add / atk_base) / 1.5 + cr + cd / 2
+
+    if stat_rate < stat_rate_limit_low:
+        if atk_add_rate < 1.2:
+            art_diff_add_rate = (ideal_atk_add_rate - atk_add_rate) / 1.5 / 2
+            ideal_cr = 0.05 if cr - art_diff_add_rate < 0.05 else cr - art_diff_add_rate
+            ideal_cd = 0.5 if cd - art_diff_add_rate * 2 < 0.5 else cd - art_diff_add_rate * 2
+        elif 1.2 <= atk_add_rate <= 1.3:
+            ideal_atk_add_rate = atk_add_rate
+        else:
+            art_diff_add_rate = (ideal_atk_add_rate - atk_add_rate) / 1.5 / 2
+            ideal_cr = 0.05 if cr - art_diff_add_rate < 0.05 else cr - art_diff_add_rate
+            ideal_cd = 0.5 if cd - art_diff_add_rate * 2 < 0.5 else cd - art_diff_add_rate * 2
     else:
-        ideal_cr = 1
-        ideal_cd = (a_ - 1.25) * 2 / 3
-        ideal_x = a - 0.75 * ideal_cd - 1.5
-        ideal_results['score_message'] = 'ほぼ完璧なので他のキャラにも目を向けてあげよう'
+        ideal_atk_add_rate = (2 * stat_rate - math.sqrt((stat_rate * stat_rate - 12 / 2))) / 3 * 1.5 - 1
+        ideal_cr = (stat_rate + math.sqrt(stat_rate * stat_rate - 12 / 2)) / 6
+        ideal_cr = 0.05 if ideal_cr < 0.05 else ideal_cr
+        ideal_cd = ideal_cr * 2
 
-    ideal_exp_dmg_v = calc_exp_dmg(n_atk, ideal_x, c_atk, ideal_cr, ideal_cd)
-    dmg_diff_rate = (exp_dmg_v / ideal_exp_dmg_v - 1)
+    # 装備スコアメッセージ
+    # if stat_rate < stat_rate_limit_low:
+    #     ideal_results['score_message'] += 'アタッカーではないか、育成が足りないようです\n'
+    # elif stat_rate_limit_low <= stat_rate < stat_rate_base:
+    #     ideal_results['score_message'] += 'まだ聖遺物が十分ではないようです\n'
+    # else:
+    #     ideal_results['score_message'] += 'さらなる高みを目指しましょう\n'
+
+    # 配分メッセージ
+    if atk_add_rate < 1.2:
+        ideal_results['score_message'] += '会心系を下げてでも攻撃力を上げましょう\n'
+    elif 1.2 <= atk_add_rate <= 1.3:
+        ideal_results['score_message'] += '攻撃力は適正なのでそのまま会心系を上げましょう\n'
+    else:
+        ideal_results['score_message'] += '攻撃力を下げてでも会心系を上げましょう\n'
+
+    dmg = calc_dmg(atk_base, atk_add_rate, cr, cd)
+    ideal_dmg = calc_dmg(atk_base, ideal_atk_add_rate, ideal_cr, ideal_cd)
+    dmg_diff_rate = (dmg / ideal_dmg - 1)
 
     print('============')
-    print(f'x_atk:{x_atk}')
+    print(f'stat_rate:{stat_rate}')
+    print(f'atk_add_rate:{atk_add_rate}')
+    print(f'ideal_atk_add_rate:{ideal_atk_add_rate}')
     print(f'cr:{cr}')
-    print(f'cd:{cd}')
-    print(f'a:{a}')
-    print(f'c_n:{c_n}')
-    print(f'a_:{a_}')
-    print('============')
-    # 攻撃力×会心（期待値）
-    print(f'exp_dmg_v:{exp_dmg_v}')
-    print(f'exp_dmg_x:{exp_dmg_x}')
-    print(f'exp_dmg_cr:{exp_dmg_cr}')
-    print(f'exp_dmg_cd:{exp_dmg_cd}')
-    print(f'ideal_exp_dmg_v:{ideal_exp_dmg_v}')
-    print(f'dmg_diff_rate:{dmg_diff_rate}')
     print(f'ideal_cr:{ideal_cr}')
+    print(f'cd:{cd}')
     print(f'ideal_cd:{ideal_cd}')
+    print('============')
+    print(f'dmg:{dmg}')
+    print(f'ideal_dmg:{ideal_dmg}')
     print('============')
 
     # 理想値とのダメージ差
     print(f'理想値とのダメージ差：{dmg_diff_rate:.2%}')
     # 同じ装備スコアの理想値
-    print(f'+攻撃力(緑)：{round(ideal_x * atk_base):,}')
+    print(f'理想+攻撃力(緑)：{round(atk_base * ideal_atk_add_rate):,}')
     # 同じ装備スコアの理想値
-    print(f'会心率：{ideal_cr:.1%}')
+    print(f'理想会心率：{ideal_cr:.1%}')
     # 同じ装備スコアの理想値
-    print(f'会心ダメージ：{ideal_cd:.1%}')
+    print(f'理想会心ダメージ：{ideal_cd:.1%}')
     print('============')
 
     ideal_results['dmg_diff_rate'] = dmg_diff_rate
-    ideal_results['ideal_atk_add'] = round(ideal_x * atk_base)
-    ideal_results['ideal_atk_add_rate'] = round(ideal_x * atk_base / atk_base, 3)
+    ideal_results['ideal_atk_add'] = round(atk_base * ideal_atk_add_rate)
+    ideal_results['ideal_atk_add_rate'] = round(atk_base * ideal_atk_add_rate / atk_base, 3)
     ideal_results['ideal_cr'] = ideal_cr
     ideal_results['ideal_cd'] = ideal_cd
-    ideal_results['exp_dmg_v'] = round(exp_dmg_v)
-    ideal_results['ideal_exp_dmg_v'] = round(ideal_exp_dmg_v)
+    ideal_results['exp_dmg_v'] = round(dmg)
+    ideal_results['ideal_exp_dmg_v'] = round(ideal_dmg)
+    # ideal_results['exp_dmg_v'] = round(exp_dmg_v)
+    # ideal_results['ideal_exp_dmg_v'] = round(ideal_exp_dmg_v)
 
     # score
     dmg_diff_rate_score = round(dmg_diff_rate * 100, 1)
 
+    # ダメージ差による減点
     if 0 < dmg_diff_rate_score <= 5:
         score += dmg_diff_rate_score * 2.5
     elif 5 < dmg_diff_rate_score <= 10:
@@ -332,9 +349,17 @@ def rate(results, options, lang=tr.ja()):
     else:
         score += dmg_diff_rate_score * 5
 
+    # 装備スコアによる減点
+    score = score - 4.5 + round(stat_rate, 1)
+
     print(f'スコア：{score}点', ideal_results)
     print('============\n')
     return score, ideal_results
+
+
+def calc_dmg(atk_base, atk_add_rate, cr, cd):
+    cr = cr if cr < 1 else 1
+    return (atk_base * (1 + atk_add_rate)) * (1 + cr * cd)
 
 
 # 期待値ダメージ計算
@@ -346,8 +371,12 @@ def calc_exp_dmg(n, x, c, cr, cd):
 if __name__ == '__main__':
     if sys.version_info[0] == 3 and sys.version_info[1] >= 8 and sys.platform.startswith('win'):
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    # 36 / kujo
+    url = 'https://media.discordapp.net/attachments/884021052575985745/886237270007492628/unknown.png'
+    # 35 / scro
+    # url = 'https://media.discordapp.net/attachments/884021052575985745/886236071212494898/unknown.png'
     # 36 / nana
-    url = 'https://media.discordapp.net/attachments/884021052575985745/886202524024070144/unknown.png'
+    # url = 'https://media.discordapp.net/attachments/884021052575985745/886202524024070144/unknown.png'
     # 35 / sho
     # url = 'https://media.discordapp.net/attachments/884021052575985745/886188859795329034/unknown.png'
     # 34 / syanrin
