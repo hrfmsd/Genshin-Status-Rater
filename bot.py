@@ -452,7 +452,8 @@ async def rate(ctx):
         description=score_message,
         color=color,
         url=url,
-        timestamp=datetime.now(JST),
+        # timestamp=datetime.now(JST),
+        timestamp=datetime.now(),
     )
     # 送信者情報セット
     embed.set_author(name=ctx.message.author.display_name, icon_url=ctx.message.author.avatar_url)

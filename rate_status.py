@@ -245,7 +245,6 @@ def rate(results, options, lang=tr.ja()):
     n_atk = atk_base * 1
     atk_add_rate = 0 if atk_base == 0 else (atk_add / atk_base)
     c_atk = n_atk
-    exp_dmg_v = calc_exp_dmg(n_atk, atk_add_rate, c_atk, cr, cd)
 
     # 理想値計算：ダメージ上昇効率で場合分けする
     # 会心率：会心ダメージの理想配分は１：２
@@ -360,12 +359,6 @@ def rate(results, options, lang=tr.ja()):
 def calc_dmg(atk_base, atk_add_rate, cr, cd):
     cr = cr if cr < 1 else 1
     return (atk_base * (1 + atk_add_rate)) * (1 + cr * cd)
-
-
-# 期待値ダメージ計算
-def calc_exp_dmg(n, x, c, cr, cd):
-    cr = cr if cr < 1 else 1
-    return (n * x + c) * (1 + cr * cd)
 
 
 if __name__ == '__main__':
