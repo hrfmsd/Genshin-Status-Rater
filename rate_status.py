@@ -68,7 +68,7 @@ async def ocr(url, num, lang=tr.ja()):
 
 
 # OCR APIの解析結果を解析
-def parse(text, lang=tr.ja()):
+def parse(text, options, lang=tr.ja()):
     results = {
         lang.atk: 0,
         lang.atk_base: 0,
@@ -82,6 +82,8 @@ def parse(text, lang=tr.ja()):
         lang.em_effect_2: 0,
         lang.em_effect_3: 0,
     }
+    
+    buffs = {}
 
     positions = {
         lang.atk_base: 1,
@@ -184,11 +186,6 @@ def parse(text, lang=tr.ja()):
             continue
         if k == lang.atk_add:
             results[k] = int(values[positions[k]].replace(',', '').replace('+', ''))
-        if k == lang.atk_add_rate:
-            atk_base = int(values[positions[lang.atk_base]].replace(',', '').replace('+', ''))
-            atk_add = int(values[positions[lang.atk_add]].replace(',', '').replace('+', ''))
-            results[k] = round(float(atk_add / atk_base) * 100, 1)
-            continue
         if k == lang.cr:
             results[k] = float(values[positions[k]].replace('%', ''))
             continue
@@ -205,7 +202,28 @@ def parse(text, lang=tr.ja()):
                 results[k] = 0
             continue
 
+    # options
+    if options:
+        for k, v in options.items():
+            if k == lang.atk:
+                results[lang.atk_add] += int(v)
+                buffs[lang.atk_add] = int(v)
+                continue
+            if k == lang.atk_add_rate:
+                results[lang.atk_add_rate] += float(v)
+                buffs[lang.atk_add_rate] = float(v)
+                continue
+            if k == lang.cr:
+                results[lang.cr] += float(v)
+                buffs[lang.cr] = float(v)
+                continue
+            if k == lang.cd:
+                results[lang.cd] += float(v)
+                buffs[lang.cd] = float(v)
+                continue
+
     results[lang.atk] = results[lang.atk_base] + results[lang.atk_add]
+    results[lang.atk_add_rate] = round(results[lang.atk_add_rate] + float(results[lang.atk_add] / results[lang.atk_base]) * 100, 1)
 
     if results[lang.em] > 0:
         results[lang.em_effect_1] = round((1.0 * 25 * results[lang.em] / (9 * (results[lang.em] + 1400))), 3)
@@ -213,11 +231,12 @@ def parse(text, lang=tr.ja()):
         results[lang.em_effect_3] = round(1.6 * 25 * results[lang.em] / (9 * (results[lang.em] + 1400)), 3)
 
     print('============\n', results)
-    return results
+    print('============\n', buffs)
+    return results, buffs
 
 
 # スコア付け
-def rate(results, options, lang=tr.ja()):
+def rate(results, lang=tr.ja()):
     score = 100
     ideal_results = {
         'score_message': ''
@@ -272,17 +291,20 @@ def rate(results, options, lang=tr.ja()):
             art_diff_add_rate = (ideal_atk_add_rate - atk_add_rate) / 1.5 / 2
             ideal_cr = 0.05 if cr - art_diff_add_rate < 0.05 else cr - art_diff_add_rate
             ideal_cd = 0.5 if cd - art_diff_add_rate * 2 < 0.5 else cd - art_diff_add_rate * 2
+            ideal_cr, ideal_cd = adjust_cr_over_limit(ideal_cr, ideal_cd)
         elif 1.2 <= atk_add_rate <= 1.3:
             ideal_atk_add_rate = atk_add_rate
         else:
             art_diff_add_rate = (ideal_atk_add_rate - atk_add_rate) / 1.5 / 2
             ideal_cr = 0.05 if cr - art_diff_add_rate < 0.05 else cr - art_diff_add_rate
             ideal_cd = 0.5 if cd - art_diff_add_rate * 2 < 0.5 else cd - art_diff_add_rate * 2
+            ideal_cr, ideal_cd = adjust_cr_over_limit(ideal_cr, ideal_cd)
     else:
         ideal_atk_add_rate = (2 * stat_rate - math.sqrt((stat_rate * stat_rate - 12 / 2))) / 3 * 1.5 - 1
         ideal_cr = (stat_rate + math.sqrt(stat_rate * stat_rate - 12 / 2)) / 6
         ideal_cr = 0.05 if ideal_cr < 0.05 else ideal_cr
         ideal_cd = ideal_cr * 2
+        ideal_cr, ideal_cd = adjust_cr_over_limit(ideal_cr, ideal_cd)
 
     # 装備スコアメッセージ
     # if stat_rate < stat_rate_limit_low:
@@ -361,6 +383,15 @@ def calc_dmg(atk_base, atk_add_rate, cr, cd):
     return (atk_base * (1 + atk_add_rate)) * (1 + cr * cd)
 
 
+def adjust_cr_over_limit(cr, cd):
+    if cr > 1:
+        cr_diff = cr - 1
+        cr = 1
+        cd += cr_diff * 2
+
+    return cr, cd
+
+
 if __name__ == '__main__':
     if sys.version_info[0] == 3 and sys.version_info[1] >= 8 and sys.platform.startswith('win'):
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
@@ -392,9 +423,11 @@ if __name__ == '__main__':
     # url = 'https://media.discordapp.net/attachments/875974646195970118/882272611646726204/unknown.png'
     # 34 /
     # url = 'https://media.discordapp.net/attachments/875974646195970118/882272755163234324/unknown.png'
+
+    options = {}
     lang = tr.ja()
     success, text = asyncio.run(ocr(url, 2, lang))
     # print(text)
     if success:
-        results = parse(text, lang)
-        rate(results, {}, lang)
+        results, buffs = parse(text, options, lang)
+        rate(results, lang)

@@ -58,6 +58,7 @@ def get_lang(ctx):
     return tr.ja()
 
 
+# プリセットを取得
 def get_presets(ctx):
     if DATABASE_URL:
         guild_id = ctx.guild.id if ctx.guild else None
@@ -219,9 +220,9 @@ async def config(ctx):
             await send(ctx, msg=lang.set_preset % (name, command))
 
 
-@bot.command(aliases=['presets'])
+@bot.command(aliases=['sets'])
 @commands.cooldown(RATE_LIMIT_N, RATE_LIMIT_TIME, commands.BucketType.user)
-async def sets(ctx):
+async def presets(ctx):
     if DEVELOPMENT and not (ctx.channel and ctx.channel.id == DEV_CHANNEL_ID):
         return
     if not DATABASE_URL:
@@ -234,15 +235,24 @@ async def sets(ctx):
         await send(ctx, msg=lang.no_presets)
         return
 
-    embed = discord.Embed(title='Presets', colour=discord.Colour.blue())
+    embed = discord.Embed(
+        title='Presets',
+        description=lang.presets_description,
+        colour=discord.Colour.blue()
+    )
     for preset in presets:
+        # preset as user
         if preset.entry_id == ctx.message.author.id:
             source = ctx.message.author.display_name
+        # preset as server
         elif ctx.guild and preset.entry_id == ctx.guild.id:
             source = ctx.guild.name
         else:
-            source = 'Artifact Rater'
-        embed.add_field(name=f'{preset.name} - {source}', value=preset.command, inline=False)
+            source = 'Status Rater'
+
+        name = f'{preset.name} by {source}'
+        command = f'`{preset.command}`'
+        embed.add_field(name=name, value=command, inline=False)
     await send(ctx, embed=embed)
 
 
@@ -266,6 +276,7 @@ async def help(ctx):
     lang = get_lang(ctx)
 
     command = ctx.message.content.split()
+    print(command)
     if len(command) > 2 or len(command) == 2 and command[1] not in lang.help_commands:
         await send(ctx, msg=lang.err_parse)
         return
@@ -304,9 +315,12 @@ async def help(ctx):
 
 
 def create_opt_to_key(lang):
-    return {'hp': lang.hp, 'atk': lang.atk, 'atk%': f'{lang.atk}%', 'er': f'{lang.er}%', 'em': lang.em,
-            'phys': f'{lang.phys}%', 'cr': f'{lang.cr}%', 'cd': f'{lang.cd}%', 'elem': f'{lang.elem}%',
-            'hp%': f'{lang.hp}%', 'def%': f'{lang.df}%', 'heal': f'{lang.heal}%', 'def': lang.df, 'lvl': lang.lvl}
+    return {
+        'atk': lang.atk,
+        'atk%': lang.atk_add_rate,
+        'cr': lang.cr,
+        'cd': lang.cd,
+    }
 
 
 # コマンド：rate
@@ -329,7 +343,8 @@ async def rate(ctx):
     msg = ctx.message.content.split()[1:]
     options = []
     preset = None
-    results = []
+    results = {}
+    buffs = {}
     score = 0
     ideal_results = {}
     for word in msg:
@@ -365,6 +380,7 @@ async def rate(ctx):
         return
 
     print(url)
+    print('============', options)
     for i in range(RETRIES + 1):
         try:
             calls += 1
@@ -385,9 +401,9 @@ async def rate(ctx):
                 return
 
             # 解析結果の解析
-            results = rs.parse(text, lang)
+            results, buffs = rs.parse(text, options, lang)
             # レーティング
-            score, ideal_results = rs.rate(results, options, lang)
+            score, ideal_results = rs.rate(results, lang)
             crashes = 0
             break
 
@@ -445,6 +461,10 @@ async def rate(ctx):
     msg_em_effect_2 = f'{results[lang.em_effect_2]:.1%}'
     msg_em_effect_3 = f'{results[lang.em_effect_3]:.1%}'
     msg_em_effect_all = f'({lang.em_effect_1} : {msg_em_effect_1} / {lang.em_effect_2} : {msg_em_effect_2} / {lang.em_effect_3} : {msg_em_effect_3})'
+    msg_buffs = f''
+    if buffs:
+        for k, v in buffs.items():
+            msg_buffs += f'> {k} : {v}\n'
 
     # 埋め込み
     embed = discord.Embed(
@@ -481,6 +501,12 @@ async def rate(ctx):
     embed.add_field(name=f'**{lang.em}**',
                     value=f'> {lang.current_val}: {msg_em}\n> {msg_em_effect_all}\n' + msg_blank,
                     inline=False)
+
+    # バフ
+    if buffs:
+        embed.add_field(name=f'**{lang.buffs}**',
+                        value=f'{msg_buffs}' + msg_blank,
+                        inline=False)
 
     # 補足
     embed.add_field(name=msg_blank,

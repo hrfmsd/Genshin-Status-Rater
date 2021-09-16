@@ -41,6 +41,7 @@ class Translation:
 
         # text that appears below artifact stats (2-piece set)
         self.piece_set = 'Piece Set'
+        self.buffs = 'Buffs'
 
         # lines will be ignored if they're an exact match
         self.ignore = ['in']
@@ -62,6 +63,7 @@ class Translation:
         self.deprecated = 'Deprecated, please use the `-user lang <lang>` command to set your language'
         self.set_lang = 'Language set to English'
         self.set_prefix = 'Prefix set to %s'
+        self.preset = 'Preset'
         self.del_preset = 'Preset %s deleted'
         self.set_preset = 'Preset %s set to %s'
         self.no_presets = 'No presets found'
@@ -117,8 +119,8 @@ class Translation:
                 'Send direct feedback with up to one image. Use this to send ideas or report errors to help us improve the bot.'
             ],
 
-            'sets': [
-                '-sets',
+            'presets': [
+                '-presets',
                 '''
                 View all available presets. Includes personal, server, and default presets.
                 This command will display a list containing the name of the preset, where it's from, and the weights it has set.
@@ -170,7 +172,7 @@ class Translation:
 		`{self.help_commands['feedback'][0]}`
 		{self.help_commands['feedback'][1]}
 
-		`{self.help_commands['sets'][0]}`
+		`{self.help_commands['presets'][0]}`
 		View all available presets.
 
 		`-help <command>`
@@ -246,6 +248,7 @@ class ja(Translation):
         self.dend = '草元素ダメージ'
 
         self.piece_set = '2セット'
+        self.buffs = 'バフ'
 
         self.ignore = []
         self.ignore_regs = [
@@ -273,6 +276,11 @@ class ja(Translation):
         self.join = f'[公式サーバー]({self.SERVER_URL})に参加する'
         self.feedback = f'フィードバックを受け取りました。詳細を追加したい場合は、 ({self.SERVER_URL})に参加してください。'
         self.set_lang = '言語を日本語に変更しました。'
+        self.set_prefix = 'コマンドのプレフィックス（接頭辞）を %s に変更しました。'
+        self.preset = 'プリセット'
+        self.del_preset = 'プリセット %s を削除しました。'
+        self.set_preset = 'プリセット %s を登録しました。（ %s ）'
+        self.no_presets = 'プリセットが見つかりません。'
 
         self.err = 'エラー'
         self.err_not_found = 'エラー：画像またはURLが見つかりませんでした。同じメッセージで送信されたことを確認してください。'
@@ -281,20 +289,86 @@ class ja(Translation):
         self.err_unknown_ocr = 'エラー：OCRが不明なエラーで失敗しました。'
         self.err_unknown = '不明なエラーが発生しました。画像を確認してください。'
 
-        self.help_stats = f'''
-        スコアや各理想値は下記を前提に算出しています。
-
-        - 会心率：会心ダメージの理想配分は１：２
-        - 聖遺物の攻撃力：会心率：会心ダメージの伸び率は1.5：１：２
-        - 聖遺物のサブOPにおける育成ボーナスは４段階あるので高スコアを優先する
-        - 会心率 <= 0.25においては攻撃力を伸ばす方がダメージ上昇効率が高い
-        - 0.25 <= 会心率 <= 0.5におけるダメージ上昇効率は2.5〜4.2
-        - 0.5 <= 会心率 <= 1におけるダメージ上昇効率は4.2〜4.5
-        - 特に会心率が0.7付近の時にダメージ上昇効率が4.5付近と最も高い
-        - 加算攻撃力比率:ar= 加算攻撃力（緑）/ 基礎攻撃力（白）
-        - 1.2 <= ar <= 1.3におけるダメージ上昇効率は4.35以上
-        - 加算攻撃力（緑）は固定値系やバフもすべて含めた割合とする
+        self.presets_description = f'''\
+現在登録されているプリセットは以下のとおりです。
         '''
+
+        self.help_stats = '`stat` で使える値： `atk`, `atk%` (Attack Rate %), `cr` (Critical Rate %), `cd` (Critical Damage %)'
+
+        self.help_commands = {
+            'rate': [
+                '/rate <image/url> [preset]',
+                f'''
+**Parameters**
+`image/url`
+評価したいステータス画面の画像を添付するかURLを記載します。 [サンプル]({self.SAMPLE_URL})
+
+`preset`
+予め登録されているプリセットによるバフ値を加算できます。
+一覧は、`/presets`または`/sets`で確認できます。
+追加、削除方法など詳細は、`/help preset`を確認してください。
+
+**Examples**
+`-rate <image> atk%=0 hp=1 er=0.5`
+`-rate <url> support lvl=4`
+'''
+            ],
+
+            'presets': [
+                '-presets',
+                '''
+                利用可能な登録済みのプリセット一覧を表示します。
+                '''
+            ],
+
+            'lang': [
+                '-[user/server] lang <lang>',
+                '''
+                言語環境を設定します。`lang`には2文字の言語コードを指定してください。
+        
+                言語コード: English (en), Japanese (ja)
+                '''
+            ],
+
+            'prefix': [
+                '-server prefix <prefix>',
+                'Change the bot\'s prefix for this server.'
+            ],
+
+            'preset': [
+                '-[user/server] preset <name> <buffs>',
+                f'''
+プリセットを指定した<name>として登録します。
+`buffs`は`<stat>=<value>`形式で指定してください。
+`buffs`は半角スペース区切りで複数指定可能です。
+{self.help_stats}
+
+
+**Example**
+`-user preset ベネバフ atk=1200`
+`-rate <image/url> ベネバフ`
+
+`-[user/server] preset delete <names>`
+指定した<name>のプリセットを削除します。
+`names`は半角スペース区切りで複数指定可能です。
+'''
+            ]
+        }
+
+        self.help_stats_calc = f'''\
+スコアや各理想値は下記を前提に算出しています。
+
+- 会心率：会心ダメージの理想配分は１：２
+- 聖遺物の攻撃力：会心率：会心ダメージの伸び率は1.5：１：２
+- 聖遺物のサブOPにおける育成ボーナスは４段階あるので高スコアを優先する
+- 会心率 <= 0.25においては攻撃力を伸ばす方がダメージ上昇効率が高い
+- 0.25 <= 会心率 <= 0.5におけるダメージ上昇効率は2.5〜4.2
+- 0.5 <= 会心率 <= 1におけるダメージ上昇効率は4.2〜4.5
+- 特に会心率が0.7付近の時にダメージ上昇効率が4.5付近と最も高い
+- 加算攻撃力比率:ar= 加算攻撃力（緑）/ 基礎攻撃力（白）
+- 1.2 <= ar <= 1.3におけるダメージ上昇効率は4.35以上
+- 加算攻撃力（緑）は固定値系やバフもすべて含めた割合とする
+'''
 
         self.help_description = f'''\
 ゲーム内ステータス詳細から理想的な攻撃力、会心率、会心ダメージの配分を調べることを目的とします。
@@ -304,8 +378,17 @@ class ja(Translation):
 OSがWindows 10の場合は、`Shift + Windows + S`を押すことで簡単に画像をクリップボードにコピーすることができます。
 
 コマンド：
-`/rate <image/url>`
-{self.help_stats}
+`/rate <image/url> [preset] `
+
+[preset]の一覧は、`/presets`または`/sets`で確認できます。
+追加、削除方法など詳細は、`/help preset`を確認してください。
+
+その他のコマンド：
+`/help [command]` ... ヘルプを表示します
+`/server lang <lang>` ... サーバー全体の言語設定を変更します
+`/user lang <lang>` ... 自分の言語設定を変更します（サーバーよりも優先されます）
+
+{self.help_stats_calc}
 '''
 
         self.help_footer = ''
